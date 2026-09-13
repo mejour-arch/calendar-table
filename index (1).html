@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Notion Calendar Widget</title>
+  <script type="text/javascript" src="https://me.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=Qbfd4C5OeVvgrIyVdNHdy0jpyEp_JlUph6o782fgFzZI-d9Y4Pg2XW9hab3iKwiSzgoRLvlYotJUGR_nenHUB4DBf2vir_0qC7Me6wKOAZeIRsDaZdM1PBpJAcExnH3VHYxL8X5vMdDFYL71wN5Ap9h7GRzwJfXRKCtxvuk6DxDo37c5-FNaFQjiZM1XyXWGJ0jzC9wvuNlGf48R7HsfbY-kpczTsEg1951e2xIsdPZq_RPF3VtqtZ3XoncWP6ukJYev5-9fQ9IEQroogT9-uA" charset="UTF-8"></script><style>
+    :root{
+      --page-bg:#ffffff;
+      --card-bg:#f5f5f5;
+      --header-bg:#e9e9e9;
+      --border:#dedede;
+      --text:#111111;
+      --muted:#c7c7c7;
+      --today-bg:#e3e3e3;
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      width:100%;
+      min-height:100%;
+      background:var(--page-bg);
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--text);
+    }
+    body{
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      padding:14px;
+      overflow:hidden;
+    }
+    .calendar{
+      width:min(100%,380px);
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:22px;
+      padding:20px 18px 18px;
+    }
+    .header{
+      display:grid;
+      grid-template-columns:42px 1fr 42px;
+      align-items:center;
+      background:var(--header-bg);
+      border-radius:16px;
+      padding:10px 8px;
+      margin-bottom:14px;
+    }
+    .title{
+      text-align:center;
+      font-weight:700;
+      font-size:21px;
+    }
+    button{
+      border:0;
+      background:transparent;
+      font-size:28px;
+      line-height:1;
+      cursor:pointer;
+      border-radius:10px;
+      height:38px;
+    }
+    button:hover{background:rgba(0,0,0,.05)}
+    .weekdays,.days{
+      display:grid;
+      grid-template-columns:repeat(7,1fr);
+      gap:8px 4px;
+      text-align:center;
+    }
+    .weekdays{margin-bottom:7px}
+    .weekday{
+      font-size:15px;
+      font-weight:700;
+      padding:6px 0;
+    }
+    .day{
+      height:42px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:18px;
+      border-radius:12px;
+      user-select:none;
+    }
+    .muted{color:var(--muted)}
+    .today{
+      background:var(--today-bg);
+      font-weight:700;
+    }
+    @media(max-width:360px){
+      body{padding:8px}
+      .calendar{padding:16px 12px 14px;border-radius:18px}
+      .title{font-size:18px}
+      .day{height:36px;font-size:16px}
+      .weekday{font-size:14px}
+    }
+  </style>
+</head>
+<body>
+  <section class="calendar">
+    <div class="header">
+      <button id="prev" aria-label="Previous month">‹</button>
+      <div class="title" id="title"></div>
+      <button id="next" aria-label="Next month">›</button>
+    </div>
+
+    <div class="weekdays">
+      <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div>
+      <div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div>
+      <div class="weekday">S</div>
+    </div>
+
+    <div class="days" id="days"></div>
+  </section>
+
+  <script>
+    const title = document.getElementById("title");
+    const days = document.getElementById("days");
+    const prev = document.getElementById("prev");
+    const next = document.getElementById("next");
+
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+
+    const mondayIndex = d => (d + 6) % 7;
+
+    function render(){
+      days.innerHTML = "";
+      const first = new Date(year, month, 1);
+      const last = new Date(year, month + 1, 0);
+      const startOffset = mondayIndex(first.getDay());
+      const daysInMonth = last.getDate();
+      const prevLast = new Date(year, month, 0).getDate();
+
+      title.textContent = new Intl.DateTimeFormat("en-US", {
+        month:"long",
+        year:"numeric"
+      }).format(first);
+
+      for(let i=0;i<42;i++){
+        const el = document.createElement("div");
+        el.className = "day";
+
+        let dayNum, cellDate, muted = false;
+
+        if(i < startOffset){
+          dayNum = prevLast - startOffset + i + 1;
+          cellDate = new Date(year, month - 1, dayNum);
+          muted = true;
+        } else if(i >= startOffset + daysInMonth){
+          dayNum = i - (startOffset + daysInMonth) + 1;
+          cellDate = new Date(year, month + 1, dayNum);
+          muted = true;
+        } else {
+          dayNum = i - startOffset + 1;
+          cellDate = new Date(year, month, dayNum);
+        }
+
+        el.textContent = dayNum;
+        if(muted) el.classList.add("muted");
+
+        if(
+          cellDate.getFullYear() === today.getFullYear() &&
+          cellDate.getMonth() === today.getMonth() &&
+          cellDate.getDate() === today.getDate()
+        ){
+          el.classList.add("today");
+        }
+
+        days.appendChild(el);
+      }
+    }
+
+    prev.addEventListener("click",()=>{
+      month--;
+      if(month < 0){ month = 11; year--; }
+      render();
+    });
+
+    next.addEventListener("click",()=>{
+      month++;
+      if(month > 11){ month = 0; year++; }
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
